@@ -6,7 +6,7 @@ function showAllDepartments() {
     db.query('SELECT * FROM department', (err, res) => {
         if (err) throw err;
         console.table(res);
-        start();
+            questions();
     }
     );
 }
@@ -21,7 +21,7 @@ function showAllRoles() {
 }
 
 function showAllEmployees() {
-    db.query('SELECT * FROM employee JOIN role on (employee.role_id = role.id) JOIN department on (role.department_id = department.id)', (err, res) => {
+    db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title,department.name AS department, role.salary, CONCAT (manager.first_name, " ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id', (err, res) => {
         if (err) throw err;
         console.table(res);
          questions();
@@ -86,9 +86,14 @@ function addEmployee(userChoice) {
             type: 'input',
             name: 'last_name',
             message: 'What is the last name of the employee you would like to add?'
-        }
+        },
+        {
+            type: 'input',
+            name: 'role_id',
+            message: 'What is the role id of your employee?'
+        },
     ]).then(function (answer) {
-        db.query(`INSERT INTO employee (first_name, last_name) VALUES ('${answer.first_name}', '${answer.last_name}')`, (err, res) => {
+        db.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES ('${answer.first_name}', '${answer.last_name}',${answer.role_id});`, (err, res) => {
             if (err) throw err;
             console.log(`${answer.first_name} ${answer.last_name} has been added to the database.`);
             questions();
@@ -102,18 +107,18 @@ function updateEmployeeRole(userChoice) {
     inquirer.prompt([
         {
             type: 'input',
-            name: 'first_name',
-            message: 'What is the first name of the employee you would like to update?'
+            name: 'employee_id',
+            message: 'What is the id of the employee you would like to update?'
         },
         {
             type: 'input',
-            name: 'last_name',
-            message: 'What is the last name of the employee you would like to update?'
+            name: 'id',
+            message: 'What role id would you like to update the employee to?'
         }
     ]).then(function (answer) {
-        db.query(`UPDATE employee SET role_id = (SELECT id FROM role WHERE title = '${userChoice}') WHERE first_name = '${answer.first_name}' AND last_name = '${answer.last_name}'`, (err, res) => {
+        db.query(`UPDATE employee SET role_id = ${answer.id} where id = ${answer.employee_id}`, (err, res) => {
             if (err) throw err;
-            console.log(`${answer.first_name} ${answer.last_name}'s role has been updated to ${userChoice}.`);
+            console.log(`Employee id #${answer.employee_id} role has been updated to ${userChoice}.`);
             questions();
         }
         );
